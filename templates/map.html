@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ship Tracker with History and Lines</title>
+    <!-- 引入官方的 Leaflet -->
+    <script src="static/js/leaflet.js"></script>
+
+    <!-- 引入自定义的 JavaScript 文件 -->
+    <script src="static/js/jquery.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+
+    <!--[if lt IE 9]>
+    <script src="static/js/html5shiv.min.js"></script>
+    <script src="static/js/respond.min.js"></script>
+    <![endif]-->
+    <script src="static/js/jquery-3.5.1.min.js"></script>
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/trianglecollapse.js"></script>
+    <!-- 引入 Zooming.js -->
+
+<!--    <script src="https://cdn.bootcdn.net/ajax/libs/zooming/2.1.1/zooming.js"></script>-->
+
+    <!-- Leaflet 和 Bootstrap 的 CSS 文件 -->
+    <link rel="stylesheet" href="static/css/leaflet.css" />
+
+    <link href="static/css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="static/css/common.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/slide.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/flat-ui.min.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/jquery.nouislider.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="static/css/mine.css" />
+
+</head>
+<body>
+
+<!-- 单图弹窗 -->
+<div id="imageModal" class="modal-overlay">
+    <div class="modal-content">
+        <span id="closeImageModal" class="close-btn">&times;</span>
+        <img id="modalImage" src="" alt="加载的图片">
+    </div>
+</div>
+
+<!-- 多图弹窗 -->
+<div id="multiImageModal" class="modal-overlay">
+    <div class="modal-content_multi" style="width: 800px; height: 600px; display: flex;">
+        <span id="closeMultiImageModal" class="close-btn">&times;</span>
+        <div class="container-wrapper">
+            <!-- 左侧图片列表 -->
+            <div id="imageContainer">
+                <!-- 这里显示图片列表 -->
+            </div>
+
+            <div id="imageContainer_results">
+                <!-- 这里显示处理后的结果 -->
+                <button id="processImages" data-aria-controls="" onclick="processImages(this)">图片1</button>
+                <button id="detectImages" data-aria-controls="" onclick="detectImages(this)">图片2</button>
+                <button id="resultAnalyze" data-aria-controls="" onclick="analyzeImages(this)">计算</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--TODO:添加鼠标悬停时颜色-->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" onClick="toggleSidebar()">
+        <i class="fas fa-arrow-right"></i> <!-- 默认箭头朝左 -->
+    </div>
+    <div class="collapsible-content" id="collapsibleContent">
+        <div class="tab-content" id="content">
+            <!-- 资源管理模块 -->
+            <div role="tabpanel" class="tab-pane active" id="sour">
+                <div class="data-div">
+                    <div class="row tableHeader">
+                        <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1" style="width: 12.2%">
+                            id
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4">
+                            事件
+                        </div>
+                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+                            坐标
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                            操作
+                        </div>
+                    </div>
+                    <div class="tablebody">
+                        <!--事件1模块-->
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                1
+                            </div>
+                            <div id="topA" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 collapsed" role="button"
+                                 data-toggle="collapse" data-parent="#accordion" href="#collapseOne"
+                                 aria-expanded="false" aria-controls="collapseOne">
+                                <span id="topA_" class="glyphicon  glyphicon-triangle-right"></span>
+                                <span>--事件1--</span>
+                            </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5"
+                                     onclick="initEvent(this)"
+                                     data-event-assign = 'event1'
+                                     style="cursor: pointer;">
+                                    查看
+                                </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+<!--                                       <button class="btn btn-success btn-xs" data-toggle="modal" data-target="#changeSource">修改</button>-->
+<!--                                       <button class="btn btn-danger btn-xs" data-toggle="modal" data-target="#deleteSource">删除</button>-->
+                            </div>
+                        </div>
+                        <div id="collapseOne" class="collapse" aria-expanded="false">
+                            <div class="row row1">
+                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl2">
+                                    1
+                                </div>
+                                <div id="ship_manage" class="col-lg-4 col-md-4 col-sm-4 col-xs-4  levl1 collapsed" role="button"
+                                     data-toggle="collapse" data-parent="#accordion" href="#collapseShip"
+                                     aria-expanded="false" aria-controls="collapseShip">
+                                    <span id="ship_manage_" class="glyphicon glyphicon-triangle-right"></span>
+                                    <span>情况</span>
+                                </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5">
+
+                                </div>
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+    <!--                                   <span id="highlight-${1}" class="btn btn-success btn-xs" style="cursor: pointer;" onclick="customFunction('${1}', this)">高亮</span>-->
+    <!--                                   <span id="hide-${1}" class="btn btn-danger btn-xs" style="cursor: pointer;" onclick="customFunction('${1}', this)">隐藏</span>-->
+                                </div>
+                            </div>
+                            <div id="collapseShip" class="collapse" aria-expanded="false">
+                                <div id="ship-list"><!-- 船只列表将动态添加到这里 -->
+                                </div>
+                            </div>
+                            <div class="row row1">
+                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl2">
+                                    2
+                                </div>
+                                <div id="habor_manage" class="col-lg-4 col-md-4 col-sm-4 col-xs-4  levl1 collapsed" role="button"
+                                     data-toggle="collapse" data-parent="#accordion" href="#collapseHarbor"
+                                     aria-expanded="false" aria-controls="collapseHarbor">
+                                    <span id="habor_manage_" class="glyphicon glyphicon-triangle-right"></span>
+                                    <span>港口情况</span>
+                                </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(79.2418, 111.2023)" style="cursor: pointer;">
+                                </div>
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+    <!--                                   <span id="highlight-${1}" class="btn btn-success btn-xs" style="cursor: pointer;" onclick="customFunction('${1}', this)">高亮</span>-->
+    <!--                                   <span id="hide-${1}" class="btn btn-danger btn-xs" style="cursor: pointer;" onclick="customFunction('${1}', this)">隐藏</span>-->
+                                </div>
+                            </div>
+                            <div id="collapseHarbor" class="collapse" aria-expanded="false">
+                                    <div class="row row2">
+                                        <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl3">
+                                            1
+                                        </div>
+                                        <div id="habor_manage1" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 collapsed" role="button"
+                                             data-toggle="collapse" data-parent="#accordion" href="#PPort_1"
+                                             aria-expanded="false" aria-controls="PPort_1" style="white-space: nowrap;">
+                                            <span id="habor_manage1_" class="glyphicon glyphicon-triangle-right"></span>
+                                            <span id="habor_name1">A港</span>
+                                        </div>
+                                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(8.3281, 101.0196)" style="cursor: pointer;">
+                                            [8.3281, 101.0196]
+                                        </div>
+                                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+<!--                                            <button id="multiImageBtn11"-->
+<!--                                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;-->
+<!--                                                        display: flex; justify-content: center; align-items: center; padding: 0;"-->
+<!--                                                    onclick="openMultiImageModal(this)">-->
+<!--                                                处理-->
+<!--                                            </button>-->
+                                        </div>
+                                    </div>
+                                    <div id="PPort_1" class="collapse" aria-expanded="false">
+                                    </div>
+
+                                    <div class="row row2">
+                                        <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl3">
+                                            2
+                                        </div>
+                                        <div id="habor_manage2" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 collapsed" role="button"
+                                             data-toggle="collapse" data-parent="#accordion" href="#habor1_1"
+                                             aria-expanded="false" aria-controls="habor1_1" style="white-space: nowrap;">
+                                            <span id="habor_manage2_" class="glyphicon glyphicon-triangle-right"></span>
+                                            <span id="habor_name2">B港</span>
+                                        </div>
+                                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(8.3611, 17.4196)" style="cursor: pointer;">
+                                            [8.3611, 17.4196]
+                                        </div>
+                                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                            <button id="multiImageBtn12"
+                                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;
+                                                        display: flex; justify-content: center; align-items: center; padding: 0;"
+                                                    onclick="openMultiImageModal(this)">
+                                                处理
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="habor1_1" class="collapse" aria-expanded="false">
+                                    </div>
+
+                                    <div class="row row2">
+                                        <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl3">
+                                            3
+                                        </div>
+                                        <div id="habor_manage3" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 collapsed" role="button"
+                                             data-toggle="collapse" data-parent="#accordion" href="#habor2_1"
+                                             aria-expanded="false" aria-controls="habor2_1" style="white-space: nowrap;">
+                                            <span id="habor_manage3_" class="glyphicon glyphicon-triangle-right"></span>
+                                            <span id="habor_name3">C港</span>
+                                        </div>
+                                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(101.210, 112.1533)" style="cursor: pointer;">
+                                            [101.210, 112.1533]
+                                        </div>
+                                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+<!--                                            <button id="multiImageBtn13"-->
+<!--                                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;-->
+<!--                                                        display: flex; justify-content: center; align-items: center; padding: 0;"-->
+<!--                                                    onclick="openMultiImageModal(this)">-->
+<!--                                                处理-->
+<!--                                            </button>-->
+                                        </div>
+                                    </div>
+                                    <div id="habor2_1" class="collapse" aria-expanded="false">
+                                    </div>
+                            </div>
+                        </div>
+                        <!--事件2模块-->
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                2
+                            </div>
+                            <div id="topB" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 collapsed" role="button"
+                                 data-toggle="collapse" data-parent="#accordion" href="#collapseTwo"
+                                 aria-expanded="false" aria-controls="collapseTwo">
+                                <span id="topB_" class="glyphicon glyphicon-triangle-right"></span>
+                                <span>--事件2--</span>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5"
+                                     onclick="initEvent(this)"
+                                     data-event-assign = 'event2'
+                                     style="cursor: pointer;">
+                                    查看
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+
+                            </div>
+                        </div>
+                        <div id="collapseTwo" class="collapse" aria-expanded="false">
+                            <div class="row row2">
+                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl2 ">
+                                    1
+                                </div>
+                                <div id="place_manage1" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 levl1 collapsed" role="button"
+                                     data-toggle="collapse" data-parent="#accordion" href="#AArea1_2"
+                                     aria-expanded="false" aria-controls="AArea1_2">
+                                    <span id="place_manage1_" class="glyphicon glyphicon-triangle-right"></span>
+                                    <span>xx</span>
+                                </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(24, 76)" style="cursor: pointer;">
+                                    [24, 76]
+                                </div>
+<!--                                <button id="multiImageBtn21"-->
+<!--                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;-->
+<!--                                    display: flex; justify-content: center; align-items: center; padding: 0;"-->
+<!--                                    onclick="openMultiImageModal(this)">-->
+<!--                                处理-->
+<!--                                </button>-->
+                            </div>
+                            <div id="AArea1_2" class="collapse" aria-expanded="false">
+
+                            </div>
+
+                            <div class="row row2">
+                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl2 ">
+                                    2
+                                </div>
+                                <div id="place_manage2" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 levl1 collapsed" role="button"
+                                     data-toggle="collapse" data-parent="#accordion" href="#AArea2_2"
+                                     aria-expanded="false" aria-controls="AArea2_2">
+                                    <span id="place_manage2_" class="glyphicon glyphicon-triangle-right"></span>
+                                    <span>xx</span>
+                                </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(24.5, 76)" style="cursor: pointer;">
+                                    [24.5, 76]
+                                </div>
+<!--                                <button id="multiImageBtn22"-->
+<!--                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;-->
+<!--                                    display: flex; justify-content: center; align-items: center; padding: 0;"-->
+<!--                                    onclick="openMultiImageModal(this)">-->
+<!--                                处理-->
+<!--                                </button>-->
+                            </div>
+                            <div id="AArea2_2" class="collapse" aria-expanded="false">
+
+                            </div>
+
+                            <div class="row row2">
+                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl2 ">
+                                    3
+                                </div>
+                                <div id="place_manage3" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 levl1 collapsed" role="button"
+                                     data-toggle="collapse" data-parent="#accordion" href="#AArea3_2"
+                                     aria-expanded="false" aria-controls="AArea3_2">
+                                    <span id="place_manage3_" class="glyphicon glyphicon-triangle-right"></span>
+                                    <span>xx</span>
+                                </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(24, 76.5)" style="cursor: pointer;">
+                                    [24, 76.5]
+                                </div>
+<!--                                <button id="multiImageBtn23"-->
+<!--                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;-->
+<!--                                    display: flex; justify-content: center; align-items: center; padding: 0;"-->
+<!--                                    onclick="openMultiImageModal(this)">-->
+<!--                                处理-->
+<!--                                </button>-->
+                            </div>
+                            <div id="AArea3_2" class="collapse" aria-expanded="false">
+
+                            </div>
+                        </div>
+                        <!--事件3模块-->
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                3
+                            </div>
+                            <div id="topC" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 collapsed" role="button"
+                                 data-toggle="collapse" data-parent="#accordion" href="#collapseThree"
+                                 aria-expanded="true" aria-controls="collapseThree">
+                                <span id="topC_" class="glyphicon glyphicon-triangle-right"></span>
+                                <span>--事件3--</span>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5"
+                                     onclick="initEvent(this)"
+                                     data-event-assign = 'event3'
+                                     style="cursor: pointer;">
+                                    查看
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                            </div>
+                        </div>
+                        <div id="collapseThree" class="collapse" aria-expanded="false">
+                            <div class="row row2">
+                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl2 ">
+                                    1
+                                </div>
+                                <div id="3_manage1" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 levl1 collapsed" role="button"
+                                     data-toggle="collapse" data-parent="#accordion" href="#3_3"
+                                     aria-expanded="false" aria-controls="3_3">
+                                    <span id="3_manage1_" class="glyphicon glyphicon-triangle-right"></span>
+                                    <span>xx</span>
+                                </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(65.223, 81.0318)" style="cursor: pointer;">
+                                    [65.223, 81.0318]
+                                </div>
+<!--                                <button id="multiImageBtn31"-->
+<!--                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;-->
+<!--                                    display: flex; justify-content: center; align-items: center; padding: 0;"-->
+<!--                                    onclick="openMultiImageModal(this)">-->
+<!--                                处理-->
+<!--                                </button>-->
+                            </div>
+                            <div id="3_3" class="collapse" aria-expanded="false">
+
+                            </div>
+
+                            <div class="row row2">
+                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 levl2 ">
+                                    2
+                                </div>
+                                <div id="3_manage2" class="col-lg-4 col-md-4 col-sm-4 col-xs-4 levl1 collapsed" role="button"
+                                     data-toggle="collapse" data-parent="#accordion" href="#33_3"
+                                     aria-expanded="false" aria-controls="33_3">
+                                    <span id="3_manage2_" class="glyphicon glyphicon-triangle-right"></span>
+                                    <span>xx</span>
+                                </div>
+                                <div class="col-lg-5 col-md-5 col-sm-5 col-xs-5" onclick="jumpToLocation(73.123, 81.2318)" style="cursor: pointer;">
+                                    [73.123, 81.2318]
+                                </div>
+<!--                                <button id="multiImageBtn32"-->
+<!--                                    style="cursor: pointer; white-space: nowrap; width: 50px; height: 20px;-->
+<!--                                    display: flex; justify-content: center; align-items: center; padding: 0;"-->
+<!--                                    onclick="openMultiImageModal(this)">-->
+<!--                                处理-->
+<!--                                </button>-->
+                            </div>
+                            <div id="33_3" class="collapse" aria-expanded="false">
+
+                            </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 右侧边栏 -->
+<div class="sidebar-right" id="sidebar-right">
+    <!-- 消息内容区域 -->
+    <div class="sidebar-right-content" id="sidebarRightContent">
+
+    </div>
+    <!-- 折叠按钮 -->
+    <button class="sidebar-right-toggle" onclick="toggleSidebarRight()">展开信息</button>
+</div>
+
+<!--时间信息控件-->
+<div class="time-info">
+    开始时间: <span id="start-time" contenteditable="true" onblur="updateStartTime()"></span><br>
+    结束时间: <span id="end-time" contenteditable="true" onblur="updateEndTime()"></span>
+    <div class="timeline" id="timeline">
+        <div class="color-bar" id="colorBar" style="left: 10%; width: 70%;"></div>
+        <div class="draggable" id="draggable1" style="left: 10%; top: 50%; transform: translate(-50%, -50%);"></div>
+        <div class="draggable" id="draggable2" style="left: 80%; top: 50%; transform: translate(-50%, -50%);"></div>
+    </div>
+    <button id="carryoutEvent" onclick="forwardEndTime(this)" data-event-assign=''>开始</button>
+    <button id="carryoutEventOnce" onclick="forwardEndTimeOnce(this)" data-event-assign=''>前进</button>
+    <div id="tooltip" class="tooltip"></div> <!-- 气泡框 -->
+
+</div>
+
+<!--地图显示控件-->
+<div class="content">
+    <div id="map">
+        <!-- 这里可以放置地图的代码，比如使用 Leaflet 或 Google Maps API -->
+        <!-- 使用后端时可以将其注释掉 -->
+        <script>
+            // 创建地图并设置初始视图
+            var map = L.map('map').setView([9.75, 115.85], 5);
+        
+            L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "© OpenStreetMap contributors"}
+            ).addTo(map);
+        </script>
+    </div>
+</div>
+
+
+
+<!--显示/隐藏左边框-->
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        sidebar.classList.toggle('expanded');
+        content.classList.toggle('expanded');
+
+        // 根据侧边栏状态显示或隐藏内容
+        const collapsibleContent = document.getElementById('collapsibleContent');
+        if (sidebar.classList.contains('expanded')) {
+            collapsibleContent.style.display = 'block'; // 显示内容
+            sidebar.querySelector('.sidebar-toggle i').classList.remove('fa-arrow-right');
+            sidebar.querySelector('.sidebar-toggle i').classList.add('fa-arrow-left'); // 切换箭头方向
+        } else {
+            collapsibleContent.style.display = 'none'; // 隐藏内容
+            sidebar.querySelector('.sidebar-toggle i').classList.remove('fa-arrow-left');
+            sidebar.querySelector('.sidebar-toggle i').classList.add('fa-arrow-right'); // 切换箭头方向
+        }
+    }
+</script>
+
+<!--多图弹窗-->
+<script>
+    /// 提交用户交互数据
+    document.getElementById('processImages').addEventListener('click', function () {
+        const selectedImages = Array.from(
+            document.querySelectorAll('#imageContainer img.selected')
+        ).map(img => img.src); // 获取选中图片路径
+
+        // 检查是否选择了两张图片
+        if (selectedImages.length !== 2) {
+            alert('必须选择两张图片！');
+            return;
+        }
+
+    });
+
+    // 单图弹窗的关闭按钮
+    document.getElementById('closeImageModal').addEventListener('click', function () {
+        document.getElementById('imageModal').style.display = 'none';
+    });
+
+    // 多图弹窗的关闭按钮
+    document.getElementById('closeMultiImageModal').addEventListener('click', function () {
+        document.getElementById('multiImageModal').style.display = 'none';
+        // 查找弹窗内的按钮并清空 data-aria-controls 属性
+        const button = document.querySelector('#multiImageModal #processImages');
+        if (button) {
+            // 清空 data-aria-controls
+            button.setAttribute('data-aria-controls', '');
+        }
+    });
+
+    // 点击背景关闭单图弹窗
+    document.getElementById('imageModal').addEventListener('click', function (event) {
+        if (event.target === this) {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+    });
+
+    // 点击背景关闭多图弹窗
+    document.getElementById('multiImageModal').addEventListener('click', function (event) {
+        if (event.target === this) {
+            // 关闭弹窗
+            document.getElementById('multiImageModal').style.display = 'none';
+
+            // 查找弹窗内的按钮并清空 data-aria-controls 属性
+            const button = document.querySelector('#multiImageModal #processImages');
+            if (button) {
+                // 清空 data-aria-controls
+                button.setAttribute('data-aria-controls', '');
+            }
+        }
+    });
+</script>
+
+<!--获取静态资源-->
+<script>
+    // 通过 Flask 的 url_for 获取静态资源路径
+    const shipIconUrlSmall = "{{ url_for('static', filename='css/images/ship-icon-0.5x.png') }}";
+    const shipIconUrlLarge = "{{ url_for('static', filename='css/images/ship-icon.png') }}";
+</script>
+<script src="static/js/usefullFunction.js"></script>
+<script src="static/js/mine.js"></script>
+<script src="static/js/markerfigure.js"></script>
+<script src="static/js/rightmessage.js"></script>
+<script src="static/js/timeline.js"></script>
+<script src="static/js/load_image.js"></script>
+
+</body>
+</html>
