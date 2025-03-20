@@ -1,0 +1,525 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    margin: 0;
+    position: relative; /* 为绝对定位做准备 */
+}
+
+/*总侧框*/
+.sidebar {
+    width: 50px; /* 默认收起宽度 */
+    background-color: #f8f9fa;
+    border-right: 1px solid #ccc;
+    transition: width 0.1s ease; /* 过渡效果 */
+    position: absolute; /* 使用绝对定位 */
+    left: 0;
+    top: 0;
+    height: 100%; /* 使侧边栏填满整个高度 */
+    z-index: 10; /* 确保在主内容之上 */
+}
+
+.sidebar.expanded {
+    width: 500px; /* 展开后的宽度 */
+}
+
+/*按钮*/
+.sidebar-toggle {
+    cursor: pointer;
+    padding: 10px;
+    text-align: center;
+    background-color: #007bff;
+    color: white;
+}
+
+/*罗列的船只信息*/
+.collapsible-content {
+    display: none; /* 默认隐藏 */
+    margin-top: 10px; /* 上边距 */
+    max-height: calc(100vh - 100px); /* 设置最大高度，减去其他固定部分的高度 */
+    overflow-y: auto; /* 允许上下滚动 */
+}
+
+/*content是map*/
+.content {
+    flex: 1;
+    padding: 20px;
+    margin-left: 50px; /* 默认左边距 */
+    transition: margin-left 0.3s ease; /* 过渡效果 */
+    position: relative; /* 为内容提供位置 */
+    z-index: 1; /* 确保在侧边栏下面 */
+}
+
+#map {
+    height: 100vh; /* 使用全屏高度 */
+    width: 100%; /* 使用全屏宽度 */
+    background-color: #e0e0e0; /* 备用背景色，表示地图区域 */
+}
+
+/* 当前状态选择器样式 */
+.state-info {
+    position: absolute; /* 固定位置 */
+    top: 20px; /* 距离顶部的距离 */
+    left: 90%; /* 中心对齐 */
+    transform: translateX(-50%); /* 使元素水平居中 */
+    background-color: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+    padding: 10px 20px; /* 内边距 */
+    border-radius: 8px; /* 圆角 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+    z-index: 5; /* 确保在其他元素上方 */
+    font-family: Arial, sans-serif; /* 字体 */
+    font-size: 18px; /* 字体大小 */
+    color: #333; /* 字体颜色 */
+}
+
+/* 当前时间样式 */
+.probability-frame {
+    position: absolute; /* 固定位置 */
+    top: 25%; /* 距离顶部的距离 */
+    left: 90%;
+    width: 10%;
+    transform: translateX(-50%); /* 使元素水平居中 */
+    background-color: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+    padding: 10px 20px; /* 内边距 */
+    border-radius: 8px; /* 圆角 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+    z-index: 5; /* 确保在其他元素上方 */
+    font-family: Arial, sans-serif; /* 字体 */
+    font-size: 18px; /* 字体大小 */
+    color: #333; /* 字体颜色 */
+    display: none; /* 初始状态下隐藏 */
+}
+
+/* 当前时间样式 */
+.time-info {
+    position: absolute; /* 固定位置 */
+    top: 20px; /* 距离顶部的距离 */
+    left: 70%;
+    width: 50%;
+    transform: translateX(-50%); /* 使元素水平居中 */
+    background-color: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+    padding: 10px 20px; /* 内边距 */
+    border-radius: 8px; /* 圆角 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+    z-index: 5; /* 确保在其他元素上方 */
+    font-family: Arial, sans-serif; /* 字体 */
+    font-size: 18px; /* 字体大小 */
+    color: #333; /* 字体颜色 */
+}
+
+/*时间轴*/
+.timeline {
+    width: 100%; /* 占父容器的 80% */
+    position: relative;
+    height: 30px;
+    border: 1px solid transparent;
+    overflow: hidden;
+    background-color: transparent;
+}
+
+.draggable {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: blue;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 1; /* 默认 z-index */
+}
+
+.color-bar {
+    position: absolute;
+    height: 20px;
+    background-color: rgba(0, 123, 255, 0.5);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 0; /* 确保在后面 */
+}
+
+.tooltip {
+    position: absolute;
+    padding: 5px 10px;
+    background-color: #333;
+    color: #fff;
+    border-radius: 5px;
+    font-size: 12px;
+    transform: translateX(-50%);
+    z-index: 20;
+    opacity: 0; /* 初始隐藏 */
+    transition: opacity 0.2s ease; /* 添加平滑过渡效果 */
+    white-space: nowrap; /* 强制文字不换行 */
+}
+
+.row {
+    display: flex;
+    align-items: flex-start; /* 垂直顶部对齐 */
+    justify-content: flex-start; /* 左对齐 */
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.tableHeader{
+    margin-right: 15px;
+    margin-left: 15px;
+}
+
+/* 背景遮罩和弹窗样式 */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+/*打开光标变成手型*/
+[id^="openModal"] {
+    cursor: pointer;
+}
+
+.modal-content {
+    position: relative;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80%;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    cursor: grab;
+}
+
+#imageContainer img {
+    width: 100px;
+    height: auto;
+    margin: 5px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+}
+
+/* 关闭按钮样式 */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 25px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#imageContainer img {
+    width: 100px;
+    height: auto;
+    margin: 5px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+}
+
+.selected {
+    border: 1px solid #ccc; /* 保持未选中时的边框 */
+    outline: 3px solid red; /* 使用 outline 实现选中效果 */
+}
+
+/* 为 row1 添加样式 */
+.row.row1 {
+    height: 40px;
+    transition: height 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;  /* 这里可以设置你需要的背景颜色 */
+}
+
+.row.row2 {
+    height: 30px;
+    transition: height 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background-color: #f1f1f1;  /* 这里可以设置你需要的背景颜色 */
+}
+
+.row.row3 {
+    height: 25px;
+    transition: height 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+}
+
+/* CSS 动画 */
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.deactivated {
+    opacity: 0.5;              /* 整体透明度降低 */
+    filter: grayscale(100%);   /* 将内部所有元素变为灰度 */
+}
+
+.deactivated img {
+    opacity: 0.5;              /* 图片的透明度降低 */
+    filter: grayscale(100%);   /* 图片变灰 */
+}
+
+.deactivated span,
+.deactivated div {
+    color: #b0b0b0;            /* 文字颜色设置为浅灰 */
+    opacity: 0.5;              /* 文字的透明度降低 */
+}
+
+.deactivated button {
+    background-color: #d3d3d3; /* 按钮背景色变浅灰 */
+    color: #808080;            /* 按钮文字颜色变灰 */
+    border-color: #b0b0b0;     /* 按钮边框变灰 */
+    opacity: 0.5;              /* 按钮的透明度降低 */
+}
+
+/*#imageContainer {*/
+/*    display: flex;*/
+/*    flex-direction: column; !* 图片垂直排列 *!*/
+/*    align-items: flex-start; !* 靠左对齐 *!*/
+/*    gap: 10px; !* 图片之间的间距 *!*/
+/*    max-height: 500px; !* 限制最大高度 *!*/
+/*    overflow-y: auto; !* 超过高度时显示垂直滚动条 *!*/
+/*    padding-right: 10px; !* 给右边添加间距以显示滚动条 *!*/
+/*}*/
+
+/* modal-content_multi 布局 */
+.modal-content_multi {
+    width: 800px;
+    height: 600px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    position: relative; /* 为了清除浮动 */
+    display: block; /* 默认块级元素，不需要 flex */
+}
+
+/* 左侧图片列表 */
+#imageContainer {
+    width: 25%; /* 左侧占 20% */
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
+    border-right: 1px solid #ccc;
+    display: inline-block; /* 使用 inline-block 来确保右侧内容不会占满整行 */
+    box-sizing: border-box;
+}
+
+#imageContainer_results {
+    width: 70%;
+    height: 100%; /* 确保右侧容器高度填充父容器 */
+    padding-left: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+    display: inline-block;
+    box-sizing: border-box;
+}
+
+/* 定义图片的样式 */
+.result-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* 自定义文本框样式 */
+.custom-popup {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    white-space: nowrap;
+    font-size: 20px;
+    display: inline-block;  /* 让宽度根据内容自动调整 */
+    max-width: 500px; /* 设置最大宽度 */
+    word-wrap: break-word; /* 防止过长的单词溢出 */
+}
+
+/* marker 闪烁效果 */
+.blinking {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.sidebar-right {
+    width: 0px; /* 默认收起宽度 */
+    height: 50%;
+    background-color: rgba(0, 0, 0, 0.7); /* 半透明黑色 */
+    color: white;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    border-left: 1px solid #ccc;
+    transition: width 0.3s ease; /* 过渡效果 */
+    z-index: 1000; /* 确保它位于地图上方 */
+    border-radius: 15px;
+}
+
+/* 展开后的样式 */
+.sidebar-right.expanded {
+    width: 400px; /* 展开后的宽度 */
+}
+
+/* 消息栏内容 */
+.sidebar-right-content {
+    margin: 15px; /* 给内容区域添加外边距 */
+    white-space: nowrap; /* 防止换行 */
+    height: calc(100% - 40px); /* 留出按钮高度 */
+    overflow-y: scroll; /* 始终显示y方向滚动条 */
+    overflow-x: hidden; /* 隐藏横向滚动条 */
+}
+
+/* 定制滚动条 */
+.sidebar-right-content::-webkit-scrollbar {
+    width: 8px; /* 设置滚动条的宽度 */
+}
+
+.sidebar-right-content::-webkit-scrollbar-track {
+    background: transparent; /* 去除滚动条轨道的灰色背景 */
+}
+
+.sidebar-right-content::-webkit-scrollbar-thumb {
+    background-color: rgba(49, 49, 49, 0.5); /* 滚动条滑块的颜色 */
+    border-radius: 10px; /* 设置滑块圆角 */
+}
+
+.sidebar-right-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(13, 13, 13, 0.7); /* 悬停时的颜色 */
+}
+
+/* 消息项样式 */
+.message {
+    padding: 10px;
+    border-radius: 5px;
+    display: block;  /* 每条消息占据一行 */
+    line-height: 1.4; /* 消息内行间距 */
+    margin-bottom: 10px; /* 消息间的行间距 */
+    max-width: 100%; /* 确保不会超过父容器的宽度 */
+}
+
+/* 按钮样式 */
+.sidebar-right-toggle {
+    position: absolute;
+    top: 10px;
+    left: -50px; /* 按钮初始位置 */
+    width: 30px;
+    height: 110px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    text-align: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: left 0.3s ease, background-color 0.3s;
+    border-radius: 5px; /* 圆角矩形按钮 */
+}
+
+/* 悬停时的按钮样式 */
+.sidebar-right-toggle:hover {
+    background-color: #0056b3; /* 鼠标悬停时的颜色 */
+}
+
+/* 展开后按钮位置 */
+.sidebar-right.expanded .sidebar-right-toggle {
+    left: -30px; /* 按钮向外移 */
+}
+
+.Princesa_1 {
+    color: #ff9b9e;
+}
+
+.Ulugan_1 {
+    color: #aaaaff;
+}
+
+.Blilutin_1 {
+    color: #93ff94;
+}
+
+.assemblyArea1_2 {
+    color: #ff9b9e;
+}
+
+.assemblyArea2_2 {
+    color: #aaaaff;
+}
+
+.assemblyArea3_2 {
+    color: #93ff94;
+}
+
+.packageArea_3 {
+    color: #ff9b9e;
+}
+
+.launchArea_3 {
+    color: #aaaaff;
+}
+
+.translateArea_3 {
+    color: #4eff5e;
+}
+
+.airportArea1_4 {
+    color: #eeff44;
+}
+
+.airportArea2_4 {
+    color: #aaaaff;
+}
+
+.airportArea3_4 {
+    color: #93ff94;
+}
+
+.airportArea4_4 {
+    color: #ff8532;
+}
