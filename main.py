@@ -31,7 +31,7 @@ TILE_DIR = 'tiles'
 
 # 创建可拖动的标记
 draggable_marker = folium.Marker(
-    location=[37.7749, -122.4194],  # 起始位置
+    location=[31.7749, -62.4194],  # 起始位置
     popup="Drag me!",  # 初始弹出框内容
     draggable=True,  # 设置为可拖动
 )
@@ -107,7 +107,7 @@ def get_tile(z, x, y):
 
 @app.route('/')
 def index():
-    return render_template('map_middle.html')
+    return render_template('map.html')
 
 
 # 定义一个缓存字典来保存文件夹中的图片列表
